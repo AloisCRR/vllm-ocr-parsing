@@ -64,9 +64,6 @@ This will open a web interface where you can:
 - Run the OCR pipeline with a click
 - Monitor processing progress
 
-
-This opens an interface to query and analyze the extracted menu data stored in DuckDB.
-
 ## Data Schema
 
 The system extracts structured menu data with the following fields:
