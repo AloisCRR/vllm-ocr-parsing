@@ -13,9 +13,7 @@ import marimo
 __generated_with = "0.18.0"
 app = marimo.App(width="columns", app_title="VLLM Restaurant Menu OCR")
 
-
-@app.cell
-def _():
+with app.setup:
     import marimo as mo
     import requests
     import json
@@ -26,23 +24,10 @@ def _():
     from pathlib import Path
     from pdf2image import convert_from_path
     from pdf2image import pdfinfo_from_path
-    return (
-        Any,
-        Dict,
-        Path,
-        base64,
-        convert_from_path,
-        dlt,
-        json,
-        mo,
-        os,
-        pdfinfo_from_path,
-        requests,
-    )
 
 
 @app.cell
-def _(Path, base64):
+def _():
     def encode_image_to_base64(image_path: str) -> str:
         """Encode image file to base64 data URL."""
         with open(image_path, "rb") as image_file:
@@ -79,173 +64,159 @@ def _(Path, base64):
     return (encode_pil_image_to_base64,)
 
 
-@app.cell
-def _(convert_from_path):
-    def extract_pdf_page_to_image(pdf_path: str, page_num: int):
-        """Extract specific page from PDF and return PIL Image object."""
-        if convert_from_path is None:
-            raise ImportError("pdf2image is required for PDF processing")
+@app.function
+def extract_pdf_page_to_image(pdf_path: str, page_num: int):
+    """Extract specific page from PDF and return PIL Image object."""
+    if convert_from_path is None:
+        raise ImportError("pdf2image is required for PDF processing")
 
-        # Convert PDF page to image (page_num is 1-based)
-        images = convert_from_path(
-            pdf_path, first_page=page_num, last_page=page_num
-        )
+    # Convert PDF page to image (page_num is 1-based)
+    images = convert_from_path(
+        pdf_path, first_page=page_num, last_page=page_num
+    )
 
-        if not images:
-            raise ValueError(f"Could not extract page {page_num} from PDF")
+    if not images:
+        raise ValueError(f"Could not extract page {page_num} from PDF")
 
-        # Return the first (and only) image as PIL Image object
-        return images[0]
-    return (extract_pdf_page_to_image,)
+    # Return the first (and only) image as PIL Image object
+    return images[0]
 
 
-@app.cell
-def _(Any, Dict):
-    def get_menu_item_schema() -> Dict[str, Any]:
-        """Get JSON schema for MenuItem structured output."""
-        return {
-            "type": "json_schema",
-            "json_schema": {
-                "name": "menu_items",
-                "strict": True,
-                "schema": {
-                    "type": "object",
-                    "properties": {
-                        "menuItems": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "description": "Name of the menu item",
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "description": "Detailed description of the menu item",
-                                    },
-                                    "price": {
-                                        "type": "number",
-                                        "description": "Price of the item",
-                                    },
-                                    "tags": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                        "description": "General tags for the item",
-                                    },
-                                    "category": {
-                                        "type": "string",
-                                        "description": "Main category (e.g., Appetizers, Main Course, etc.)",
-                                    },
-                                    "subCategory": {
-                                        "type": "string",
-                                        "description": "Sub-category within the main category",
-                                    },
-                                    "ingredients": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                        "description": "List of ingredients in the item",
-                                    },
-                                    "dietaryTags": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                        "description": "Dietary flags",
-                                    },
-                                    "spicinessLevel": {
-                                        "type": "number",
-                                        "minimum": 0,
-                                        "maximum": 5,
-                                        "description": "Spiciness level from 0 (bland) to 5 (very spicy)",
-                                    },
-                                    "portionSize": {
-                                        "type": "string",
-                                        "description": "Portion context (e.g., 2 units, 8 pieces, 300g)",
-                                    },
+@app.function
+def get_menu_item_schema() -> Dict[str, Any]:
+    """Get JSON schema for MenuItem structured output."""
+    return {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "menu_items",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "menuItems": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Name of the menu item",
                                 },
-                                "required": [
-                                    "name",
-                                    "description",
-                                    "price",
-                                    "tags",
-                                    "category",
-                                    "spicinessLevel",
-                                    "ingredients",
-                                    "dietaryTags",
-                                ],
-                                "additionalProperties": False,
+                                "description": {
+                                    "type": "string",
+                                    "description": "Detailed description of the menu item",
+                                },
+                                "price": {
+                                    "type": "number",
+                                    "description": "Price of the item",
+                                },
+                                "tags": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                    "description": "General tags for the item",
+                                },
+                                "category": {
+                                    "type": "string",
+                                    "description": "Main category (e.g., Appetizers, Main Course, etc.)",
+                                },
+                                "subCategory": {
+                                    "type": "string",
+                                    "description": "Sub-category within the main category",
+                                },
+                                "ingredients": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                    "description": "List of ingredients in the item",
+                                },
+                                "dietaryTags": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                    "description": "Dietary flags",
+                                },
+                                "spicinessLevel": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 5,
+                                    "description": "Spiciness level from 0 (bland) to 5 (very spicy)",
+                                },
+                                "portionSize": {
+                                    "type": "string",
+                                    "description": "Portion context (e.g., 2 units, 8 pieces, 300g)",
+                                },
                             },
-                        }
-                    },
-                    "required": ["menuItems"],
-                    "additionalProperties": False,
-                },
-            },
-        }
-    return (get_menu_item_schema,)
-
-
-@app.cell
-def _(Any, Dict, get_menu_item_schema, requests):
-    def parse_menu_with_openrouter(
-        base64_image: str, api_key: str
-    ) -> Dict[str, Any]:
-        """Parse menu image using OpenRouter API with structured output."""
-
-        # Prepare API request
-        url = "https://openrouter.ai/api/v1/chat/completions"
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        }
-
-        payload = {
-            "model": "qwen/qwen3-vl-30b-a3b-instruct",
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": """Extract all menu items from this restaurant menu image. For each item, provide:
-    - Item name and description
-    - Price
-    - Category and sub-category
-    - All ingredients you can identify
-    - Dietary tags (vegetarian, vegan, keto, gluten-friendly-option, etc.)
-    - Spiciness level (0-5 scale, if applicable)
-    - Portion size information
-    - General tags
-
-    Be thorough and accurate. If information is not visible for a field, make reasonable inferences based on the item name and description. Maintain the language of the image in your results.""",
+                            "required": [
+                                "name",
+                                "description",
+                                "price",
+                                "tags",
+                                "category",
+                                "spicinessLevel",
+                                "ingredients",
+                                "dietaryTags",
+                            ],
+                            "additionalProperties": False,
                         },
-                        {"type": "image_url", "image_url": {"url": base64_image}},
-                    ],
-                }
-            ],
-            "provider": {
-                "require_parameters": True,
+                    }
+                },
+                "required": ["menuItems"],
+                "additionalProperties": False,
             },
-            "response_format": get_menu_item_schema(),
-        }
+        },
+    }
 
-        # Make API request
-        response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
 
-        return response.json()
-    return (parse_menu_with_openrouter,)
+@app.function
+def parse_menu_with_openrouter(
+    base64_image: str, api_key: str
+) -> Dict[str, Any]:
+    """Parse menu image using OpenRouter API with structured output."""
+
+    # Prepare API request
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "model": "qwen/qwen3-vl-30b-a3b-instruct",
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": """Extract all menu items from this restaurant menu image. For each item, provide:
+- Item name and description
+- Price
+- Category and sub-category
+- All ingredients you can identify
+- Dietary tags (vegetarian, vegan, keto, gluten-friendly-option, etc.)
+- Spiciness level (0-5 scale, if applicable)
+- Portion size information
+- General tags
+
+Be thorough and accurate. If information is not visible for a field, make reasonable inferences based on the item name and description. Maintain the language of the image in your results.""",
+                    },
+                    {"type": "image_url", "image_url": {"url": base64_image}},
+                ],
+            }
+        ],
+        "provider": {
+            "require_parameters": True,
+        },
+        "response_format": get_menu_item_schema(),
+    }
+
+    # Make API request
+    response = requests.post(url, headers=headers, json=payload)
+    response.raise_for_status()
+
+    return response.json()
 
 
 @app.cell
-def _(
-    dlt,
-    encode_pil_image_to_base64,
-    extract_pdf_page_to_image,
-    json,
-    os,
-    parse_menu_with_openrouter,
-    pdfinfo_from_path,
-):
+def _(encode_pil_image_to_base64):
     @dlt.resource(write_disposition="replace")
     def process_pdf_pages(pdf_path: str, api_key: str):
         """Process all pages of a PDF and yield OCR responses with metadata."""
@@ -319,7 +290,7 @@ def _(
 
 
 @app.cell
-def _(mo):
+def _():
     pdf_file = mo.ui.file_browser(
         selection_mode="file",
         multiple=False,
@@ -341,7 +312,7 @@ def _(pdf_file):
 
 
 @app.cell
-def _(mo):
+def _():
     run_ingest_pipeline = mo.ui.run_button(label="Click to run the OCR pipeline")
 
     run_ingest_pipeline
@@ -349,15 +320,7 @@ def _(mo):
 
 
 @app.cell
-def _(
-    dlt,
-    mo,
-    os,
-    pdf_file,
-    process_pdf_pages,
-    run_ingest_pipeline,
-    selected_pdf,
-):
+def _(pdf_file, process_pdf_pages, run_ingest_pipeline, selected_pdf):
     mo.stop(not run_ingest_pipeline.value, mo.md("Click the button to run"))
 
     """Main function to process PDF with dlt pipeline and store in DuckDB."""
